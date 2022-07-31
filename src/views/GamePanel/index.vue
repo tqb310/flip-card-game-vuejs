@@ -1,17 +1,25 @@
 <template>
   <div class="game-panel">
-    <!-- <button @click="$emit('exitGame')">Exit</button> -->
+    <div class="game-panel__control">
+      <button @click="$emit('exitGame')">Exit</button>
+    </div>
     <ul
       class="game-panel__main"
       :style="{ gridTemplateColumns: `repeat(${Math.sqrt(cardNumber)}, 1fr)` }"
     >
       <li
-        class="game-panel__item"
-        :style="{ width: `65px` }"
-        v-for="(el, index) in new Array(cardNumber)"
+        v-for="(el, index) in reactiveCards"
+        :class="['game-panel__item', { rotate: el.isFlipped }]"
+        :style="{ width: mapSize[cardNumber].w, height: mapSize[cardNumber].h }"
+        @click="flipCard(index, el.type)"
         :key="index"
       >
-        <img :src="handledCards[index]" alt="title" />
+        <div class="front">
+          <img :src="pokeball" alt="title" :style="{ width: '60%' }" />
+        </div>
+        <div class="back">
+          <img :src="reactiveCards[index].path" alt="title" />
+        </div>
       </li>
     </ul>
   </div>
@@ -20,11 +28,13 @@
 <script>
 import images from "../../assets/images/index";
 import pokeball from "../../assets/images/pokeball.png";
-const map = {
-  16: "135px",
-  32: "75px",
-  64: "75px",
-  100: "75px",
+import { reactive, ref } from "vue";
+
+const mapSize = {
+  16: { w: "135px", h: "150px" },
+  36: { w: "95px", h: "100px" },
+  64: { w: "65px", h: "70px" },
+  100: { w: "50px", h: "55px" },
 };
 export default {
   props: {
@@ -33,13 +43,47 @@ export default {
       default: 0,
     },
   },
-  setup(props) {
-    let handledCards = images.slice(0, props.cardNumber / 2);
-    handledCards = handledCards.concat(handledCards);
+  setup(props, ctx) {
+    let mappedCards = images.slice(0, props.cardNumber / 2);
+    mappedCards = mappedCards.map((path, index) => ({
+      path,
+      type: index,
+      isFlipped: false,
+    }));
+    const handledCards = [...mappedCards];
+    mappedCards.forEach((item) => handledCards.push({ ...item }));
     handledCards.sort(() => Math.random() - Math.random());
-    return { handledCards };
+
+    const reactiveCards = reactive(handledCards);
+    const flippedCardNumbers = ref(0);
+    const isFlipping = ref(false);
+    const coupleOfIdenticalCard = reactive({
+      first: { index: -1, type: 0 },
+    });
+
+    function flipCard(index, type) {
+      if (isFlipping.value) return;
+      reactiveCards[index].isFlipped = true;
+      if (coupleOfIdenticalCard.first.index === -1)
+        coupleOfIdenticalCard.first = { index, type };
+      else {
+        isFlipping.value = true;
+        setTimeout(() => {
+          if (coupleOfIdenticalCard.first.type !== type) {
+            reactiveCards[coupleOfIdenticalCard.first.index].isFlipped = false;
+            reactiveCards[index].isFlipped = false;
+          } else {
+            if (flippedCardNumbers.value + 2 >= props.cardNumber)
+              ctx.emit("doneGame");
+            else flippedCardNumbers.value = flippedCardNumbers.value + 2;
+          }
+          isFlipping.value = false;
+          coupleOfIdenticalCard.first = { index: -1, type: 0 };
+        }, 1000);
+      }
+    }
+    return { reactiveCards, mapSize, pokeball, flipCard };
   },
-  // emits: ["exitGame"],
 };
 </script>
 
@@ -48,12 +92,47 @@ export default {
 .game-panel {
   &__main {
     display: grid;
-    gap: 2.5rem;
+    gap: 2rem;
     .game-panel__item {
-      background-color: $light;
-      text-align: center;
-      padding: 1rem;
-      border-radius: 8px;
+      position: relative;
+      perspective: 400px;
+      transform-style: preserve-3d;
+      &.rotate {
+        .front {
+          transform: rotateY(-180deg);
+        }
+        .back {
+          transform: rotateY(0deg);
+        }
+      }
+      .front,
+      .back {
+        position: absolute;
+        background-color: $light;
+        border-radius: 8px;
+        height: 100%;
+        transition: transform 0.7s ease-out;
+        backface-visibility: hidden;
+      }
+      .front {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .back {
+        transform: rotateY(180deg);
+        padding: 1rem;
+      }
+    }
+  }
+  &__control {
+    position: fixed;
+    left: 30px;
+    top: 30px;
+    button {
+      padding: 1rem 2rem;
+      font-family: $font;
+      font-size: 2rem;
     }
   }
 }
