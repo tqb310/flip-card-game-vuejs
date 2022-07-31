@@ -5,7 +5,7 @@
       <h1>Congratulations</h1>
       <img :src="Congrat" alt="congrat" />
     </div>
-    <p>Time: {{ convertTimeToText(time) }}</p>
+    <p>Time: {{ timeText }}</p>
     <button @click="$emit('startAgain')">Start Again</button>
   </div>
 </template>
@@ -13,6 +13,8 @@
 <script>
 import Congrat from "../../assets/images/confetti.png";
 import convertTimeToText from "../../utils/convertTimeToText";
+import { computed } from "vue";
+
 export default {
   props: {
     time: {
@@ -20,8 +22,9 @@ export default {
       default: 0,
     },
   },
-  setup() {
-    return { Congrat, convertTimeToText };
+  setup(props) {
+    const timeText = computed(() => convertTimeToText(props.time));
+    return { Congrat, timeText };
   },
 };
 </script>

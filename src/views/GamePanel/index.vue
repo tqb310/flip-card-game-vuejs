@@ -11,14 +11,14 @@
         v-for="(el, index) in reactiveCards"
         :class="['game-panel__item', { rotate: el.isFlipped }]"
         :style="{ width: mapSize[cardNumber].w, height: mapSize[cardNumber].h }"
-        @click="flipCard(index, el.type)"
+        @click="flipCard(index, el.path)"
         :key="index"
       >
         <div class="front">
           <img :src="pokeball" alt="title" :style="{ width: '60%' }" />
         </div>
         <div class="back">
-          <img :src="reactiveCards[index].path" alt="title" />
+          <img :src="el.path" alt="title" />
         </div>
       </li>
     </ul>
@@ -48,7 +48,6 @@ export default {
     let mappedCards = images.slice(0, props.cardNumber / 2);
     mappedCards = mappedCards.map((path, index) => ({
       path,
-      type: index,
       isFlipped: false,
     }));
     const handledCards = [...mappedCards];
@@ -59,18 +58,21 @@ export default {
     const flippedCardNumbers = ref(0);
     const isFlipping = ref(false);
     const coupleOfIdenticalCard = reactive({
-      first: { index: -1, type: 0 },
+      first: { index: -1, value: "" },
     });
 
-    function flipCard(index, type) {
+    function flipCard(index, value) {
       if (isFlipping.value) return;
+
       reactiveCards[index].isFlipped = true;
+
       if (coupleOfIdenticalCard.first.index === -1) {
-        coupleOfIdenticalCard.first = { index, type };
+        coupleOfIdenticalCard.first = { index, value };
       } else {
         isFlipping.value = true;
+
         setTimeout(() => {
-          if (coupleOfIdenticalCard.first.type !== type) {
+          if (coupleOfIdenticalCard.first.value !== value) {
             reactiveCards[coupleOfIdenticalCard.first.index].isFlipped = false;
             reactiveCards[index].isFlipped = false;
           } else {
@@ -79,7 +81,7 @@ export default {
             else flippedCardNumbers.value = flippedCardNumbers.value + 2;
           }
           isFlipping.value = false;
-          coupleOfIdenticalCard.first = { index: -1, type: 0 };
+          coupleOfIdenticalCard.first = { index: -1, value: "" };
         }, 1000);
       }
     }
