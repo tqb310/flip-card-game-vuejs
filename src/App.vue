@@ -7,13 +7,17 @@ import Result from "./views/Result/index.vue";
 export default {
   setup() {
     const mode = ref("start");
+    const time = ref(0);
     const cardNumber = ref(0);
     function enterGame(number) {
       mode.value = "playing";
       cardNumber.value = number;
     }
-
-    return { mode, cardNumber, enterGame };
+    function doneGame(t) {
+      mode.value = "result";
+      time.value = t;
+    }
+    return { mode, cardNumber, enterGame, time, doneGame };
   },
   components: { Beginning, GamePanel, Result },
 };
@@ -23,11 +27,11 @@ export default {
   <game-panel
     v-if="mode === 'playing'"
     @exit-game="mode = 'start'"
-    @done-game="mode = 'result'"
+    @done-game="doneGame"
     :cardNumber="cardNumber"
   />
   <beginning v-else-if="mode === 'start'" @enter-game="enterGame" />
-  <result v-else @start-again="mode = 'start'" />
+  <result v-else @start-again="mode = 'start'" :time="time" />
 </template>
 
 <style scoped lang="scss">

@@ -44,6 +44,7 @@ export default {
     },
   },
   setup(props, ctx) {
+    let startTime = Date.now();
     let mappedCards = images.slice(0, props.cardNumber / 2);
     mappedCards = mappedCards.map((path, index) => ({
       path,
@@ -64,9 +65,9 @@ export default {
     function flipCard(index, type) {
       if (isFlipping.value) return;
       reactiveCards[index].isFlipped = true;
-      if (coupleOfIdenticalCard.first.index === -1)
+      if (coupleOfIdenticalCard.first.index === -1) {
         coupleOfIdenticalCard.first = { index, type };
-      else {
+      } else {
         isFlipping.value = true;
         setTimeout(() => {
           if (coupleOfIdenticalCard.first.type !== type) {
@@ -74,7 +75,7 @@ export default {
             reactiveCards[index].isFlipped = false;
           } else {
             if (flippedCardNumbers.value + 2 >= props.cardNumber)
-              ctx.emit("doneGame");
+              ctx.emit("doneGame", (Date.now() - startTime).toString());
             else flippedCardNumbers.value = flippedCardNumbers.value + 2;
           }
           isFlipping.value = false;
